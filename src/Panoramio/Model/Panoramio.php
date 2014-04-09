@@ -8,8 +8,10 @@
  * @license GPL V3.0
  * @version 0.1
  */
- 
- class panoramioAPI 
+
+namespace Panoramio;
+
+ class Panoramio
  {
 	// Supplied Cordinates to search near for images
 	var $_requiredLatitude = '-33.8846';
