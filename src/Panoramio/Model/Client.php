@@ -20,6 +20,28 @@ class Client
     protected $apiUrl = 'http://www.panoramio.com/map/get_panoramas.php';
 
     /**
+     * @var AuthorManager
+     */
+    protected $authorManager;
+
+    /**
+     * @param \Panoramio\Model\AuthorManager $authorManager
+     */
+    public function setAuthorManager($authorManager)
+    {
+        $this->authorManager = $authorManager;
+    }
+
+    /**
+     * @return \Panoramio\Model\AuthorManager
+     */
+    public function getAuthorManager()
+    {
+        return $this->authorManager;
+    }
+
+
+    /**
      * @param float|null $lat
      * @param float|null $lon
      * @return Request
@@ -85,11 +107,63 @@ class Client
     /**
      * Get a set of images from the Panoramio API
      */
-    public function getImages(Request $request, $size = "medium", $order = "upload_date", $limit = 10, $offset = 0)
+    public function getImagesRaw(Request $request, $size = "medium", $order = "upload_date", $limit = 10, $offset = 0)
     {
         $url = $this->getUrl($request, $size, $order, $limit, $offset);
         $response = $this->processRequest($url);
         return $response;
+    }
+
+    /**
+     * @param array $panoramioData
+     * @return ImageFile
+     */
+    public function createImage(array $panoramioData)
+    {
+        $image = new ImageFile();
+        $image->setId($panoramioData["photo_id"]);
+        $image->setPath($panoramioData["photo_file_url"]);
+        $image->setName($panoramioData["photo_title"]);
+        $authorId = (integer) $panoramioData["owner_id"];
+        $am = $this->getAuthorManager();
+        $author = $am->getAuthor($authorId);
+        if (!$author) {
+            $author = $am->createAuthor($authorId, $panoramioData["owner_name"], $panoramioData["owner_url"]);
+        }
+        $image->setAuthor($author);
+        return $image;
+    }
+
+    /**
+     * @param float $lat
+     * @param float $lon
+     * @param int $distance
+     * @param string $size
+     * @param string $order
+     * @param int $limit
+     * @param int $offset
+     * @return ImageFile[]
+     */
+    public function getImages($lat, $lon, $distance = 50, $size = "medium", $order = "upload_date", $limit = 6, $offset = 0)
+    {
+        $request = new Request();
+        $request->setLat($lat);
+        $request->setLon($lon);
+        $request->setDistanceInMetres($distance);
+
+        $data = $this->getImagesRaw($request, $size, $order, $limit, $offset);
+        if (!$data) {
+            return [];
+        }
+        $images = [];
+        $photos = isset($data["photos"]) ? $data["photos"] : [];
+        foreach($photos as $imageData) {
+            if (($imageData["width"] / $imageData["height"]) > 2.3) {
+                continue;
+            }
+            $images[] = $this->createImage($imageData);
+        }
+        return $images;
     }
 
 }
