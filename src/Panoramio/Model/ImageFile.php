@@ -31,7 +31,13 @@ class ImageFile extends \Attach\Model\ImageFile
 
     public function getUri($template = null)
     {
-        return $this->getPath();
+        $simpleSizes = ["small", "thumbnail", "square", "mini_square"];
+        if (!in_array($template, $simpleSizes)) {
+            return $this->getPath();
+        }
+        $url = $this->getPath();
+        $url = str_replace("/medium/", "/$template/", $url);
+        return $url;
     }
 
 } 
