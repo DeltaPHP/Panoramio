@@ -19,6 +19,8 @@ class Client
     protected $headers = ['Panoramio-Client-Version: 0.1'];
     protected $apiUrl = 'http://www.panoramio.com/map/get_panoramas.php';
 
+    protected $connectionErrors = 0;
+
     /**
      * @var AuthorManager
      */
@@ -84,7 +86,16 @@ class Client
      */
     protected function processRequest($url)
     {
+        if ($this->connectionErrors > 3) {
+            return false;
+        }
         $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+        if ($this->connectionErrors > 1) {
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 7);
+        }
         curl_setopt($ch, CURLOPT_VERBOSE, 1);
         curl_setopt($ch, CURLOPT_NOBODY, 0);
         curl_setopt($ch, CURLOPT_HEADER, 0);
@@ -100,6 +111,7 @@ class Client
         if (intval($responseInformation['http_code']) == 200) {
             return json_decode($apiResponse, true);
         } else {
+            $this->connectionErrors = $this->connectionErrors + 1;
             return false;
         }
     }
