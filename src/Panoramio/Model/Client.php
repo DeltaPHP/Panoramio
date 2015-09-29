@@ -12,6 +12,8 @@
 
 namespace Panoramio\Model;
 
+use Attach\Model\File;
+
 class Client
 {
     // Specifics for communication with the actual URL itself
@@ -129,20 +131,54 @@ class Client
     /**
      * @param array $panoramioData
      * @return ImageFile
+     * @deprecated
      */
     public function createImage(array $panoramioData)
     {
-        $image = new ImageFile();
-        $image->setId($panoramioData["photo_id"]);
-        $image->setPath($panoramioData["photo_file_url"]);
-        $image->setName($panoramioData["photo_title"]);
-        $authorId = (integer) $panoramioData["owner_id"];
+        return $this->create($panoramioData);
+    }
+
+    public function load(ImageFile $image, $data)
+    {
         $am = $this->getAuthorManager();
-        $author = $am->getAuthor($authorId);
-        if (!$author) {
-            $author = $am->createAuthor($authorId, $panoramioData["owner_name"], $panoramioData["owner_url"]);
+        if (isset($data["photo_id"])) {
+            $image->setId($data["photo_id"]);
+            $image->setPath($data["photo_file_url"]);
+            $image->setName($data["photo_title"]);
+            $authorId = (integer) $data["owner_id"];
+            $authorData = [
+                "id" => $data["owner_id"],
+                "name" => $data["owner_name"],
+                "uri" => $data["owner_url"]
+            ];
+        } else {
+            $image->setId($data["id"]);
+            $image->setPath($data["uri"]);
+            $image->setName($data["name"]);
+            if (isset($data["author"])) {
+                $authorId = (integer) $data["author"]["id"];
+                $authorData = $data["author"];
+            }
         }
-        $image->setAuthor($author);
+        if (isset($authorId)) {
+            $author = $am->getAuthor($authorId);
+        }
+
+        if (!$author && isset($authorData)) {
+            $author = $am->create($authorData);
+        }
+        if ($author) {
+            $image->setAuthor($author);
+        }
+        return $image;
+    }
+
+    public function create(array $panoramioData = null)
+    {
+        $image = new ImageFile();
+        if (!empty($panoramioData)) {
+            $this->load($image, $panoramioData);
+        }
         return $image;
     }
 

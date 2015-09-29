@@ -6,7 +6,11 @@
 namespace Panoramio\Model;
 
 
-class Author 
+use DeltaCore\Prototype\AbstractEntity;
+use DeltaCore\Prototype\ArrayableInterface;
+use DeltaCore\Prototype\ElasticEntityInterface;
+
+class Author extends AbstractEntity implements ElasticEntityInterface, ArrayableInterface
 {
     protected $id;
     protected $name;
