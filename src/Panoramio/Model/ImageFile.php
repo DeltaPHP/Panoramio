@@ -29,7 +29,17 @@ class ImageFile extends \Attach\Model\ImageFile
         return $this->author;
     }
 
+    /**
+     * @param null $template
+     * @return mixed|string
+     * @deprecated
+     */
     public function getUri($template = null)
+    {
+        return $this->getUrl($template);
+    }
+
+    public function getUrl($template = null)
     {
         $simpleSizes = ["small", "thumbnail", "square", "mini_square"];
         if (!in_array($template, $simpleSizes)) {

@@ -209,7 +209,7 @@ class Client
             if (($imageData["width"] / $imageData["height"]) > 2.3) {
                 continue;
             }
-            $images[] = $this->createImage($imageData);
+            $images[] = $this->create($imageData);
         }
         return $images;
     }
