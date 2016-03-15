@@ -153,7 +153,7 @@ class Client
             ];
         } else {
             $image->setId($data["id"]);
-            $image->setPath($data["uri"]);
+            $image->setPath($data["path"]);
             $image->setName($data["name"]);
             if (isset($data["author"])) {
                 $authorId = (integer) $data["author"]["id"];
